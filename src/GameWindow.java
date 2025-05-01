@@ -1,12 +1,14 @@
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.Timer;
 
@@ -54,6 +56,17 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     private long levelStartTime;
     private long timeLimitMs;
 
+    // Sprites
+    private Image backgroundImage;
+    private Image playerIdleSprite;
+    private Image playerJumpSprite;
+    private Image playerShootingSprite;
+    private Image playerShootingAirSprite;
+    private Image enemySprite;
+    private Image bulletSprite;
+    private Image chargeBulletSprite;
+
+
     public GameWindow() {
         setTitle("Mega Man X");
         setSize(700, 600);
@@ -70,6 +83,16 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         timer = new Timer(delay, this);
         timer.start();
 
+        backgroundImage = new ImageIcon("images/background.png").getImage();
+        playerIdleSprite = new ImageIcon("images/player_idle.png").getImage();
+        playerJumpSprite = new ImageIcon("images/player_jump.png").getImage();
+        playerShootingSprite = new ImageIcon("images/player_shooting.png").getImage();
+        playerShootingAirSprite = new ImageIcon("images/player_shooting_air.png").getImage();
+        enemySprite = new ImageIcon("images/enemy.png").getImage();
+        bulletSprite = new ImageIcon("images/bullet.png").getImage();
+        chargeBulletSprite = new ImageIcon("images/charge_bullet.png").getImage();
+
+
         resetGame(); // Start the first level
         setVisible(true);
     }
@@ -77,31 +100,36 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     public void paint(Graphics g) {
         super.paint(g);
 
-        // Background
-        g.setColor(Color.cyan);
-        g.fillRect(0, 0, 695, 592);
+        // Draw the background
+        g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
 
-        // Floor
-        g.setColor(Color.gray);
-        g.fillRect(0, floorY, 695, 50);
+// Determine which sprite to draw
+        Image currentPlayerSprite = playerIdleSprite;
 
-        // Player
-        g.setColor(Color.blue);
-        g.fillRect(playerX, playerY, playerSize, playerSize);
+        if (isJumping && isCharging) {
+            currentPlayerSprite = playerShootingAirSprite;
+        } else if (isJumping) {
+            currentPlayerSprite = playerJumpSprite;
+        } else if (isCharging) {
+            currentPlayerSprite = playerShootingSprite;
+        }
 
-        // Player projectiles
-        g.setColor(Color.red);
+// Draw the player
+        g.drawImage(currentPlayerSprite, playerX, playerY, playerSize, playerSize, this);
+
+
         for (Projectile p : projectiles) {
             if (p.isActive()) {
-                g.fillOval(p.getX(), p.getY(), p.getSize(), p.getSize());
+                Image projImage = p.getSize() == chargeShotSize ? chargeBulletSprite : bulletSprite;
+                g.drawImage(projImage, p.getX(), p.getY(), p.getSize(), p.getSize(), this);
             }
         }
 
-        // Enemy
+
         if (beeCopter.getHp() > 0) {
-            g.setColor(Color.black);
-            g.fillRect(enemyX, enemyY, enemySize, enemySize);
+            g.drawImage(enemySprite, enemyX, enemyY, enemySize, enemySize, this);
         }
+
 
         // Enemy projectile
         if (isEnemyProjectileActive) {
@@ -325,5 +353,3 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
 
     @Override public void keyTyped(KeyEvent e) {}
 }
-
-
