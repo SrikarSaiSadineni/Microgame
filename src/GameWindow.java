@@ -34,7 +34,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
 
     // Enemy
     private final int enemyX = 500;
-    private int enemyY = floorY - (playerSize+70);
+    private int enemyY = floorY - (playerSize + 70);
     private final int enemySize = 40;
 
     // Enemy projectile
@@ -47,7 +47,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
 
     // Time tracking
     private long levelStartTime;
-    private long time_limit = 10000; // 10 seconds
+    private long timeLimitMs;
 
     public GameWindow() {
         setTitle("Mega Man X");
@@ -65,7 +65,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         timer = new Timer(delay, this);
         timer.start();
 
-        levelStartTime = System.currentTimeMillis(); // Start timer
+        resetGame(); // Start the first level
         setVisible(true);
     }
 
@@ -108,23 +108,31 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         g.drawString("Player Health: " + megaMan.getHealth(), 20, 50);
         g.drawString("Enemy Health: " + beeCopter.getHp(), 500, 50);
         g.drawString("Lives: " + gameStatus.getPlayerLives(), 20, 80);
+        g.drawString("Level: " + gameStatus.getCurrentLevel(), 20, 110);
 
-        // Timer countdown
         long currentTime = System.currentTimeMillis();
         long elapsed = currentTime - levelStartTime;
-        long remaining = Math.max(0, (time_limit - elapsed) / 1000); // in seconds
+        long remaining = Math.max(0, (timeLimitMs - elapsed) / 1000); // in seconds
 
         g.drawString("Time Left: " + remaining + "s", 500, 80);
-
 
         if (gameOver) {
             g.setFont(new Font("serif", Font.BOLD, 40));
             g.setColor(Color.RED);
-            if (playerWon) {
-                g.drawString("You Won!", 250, 300);
-            } else {
-                g.drawString("You Lost!", 250, 300);
-            }
+
+            // Center the text horizontally and vertically
+            String gameOverText = playerWon ? "You Won!" : "You Lost!";
+            int textWidth = g.getFontMetrics().stringWidth(gameOverText);
+            int xPosition = (getWidth() - textWidth) / 2;
+            g.drawString(gameOverText, xPosition, 280);
+
+            // Display Restart option
+            g.setFont(new Font("serif", Font.BOLD, 24));
+            g.setColor(Color.WHITE);
+            String restartText = "Press R to Restart";
+            int restartTextWidth = g.getFontMetrics().stringWidth(restartText);
+            int restartXPosition = (getWidth() - restartTextWidth) / 2;
+            g.drawString(restartText, restartXPosition, 330);
         }
     }
 
@@ -132,16 +140,16 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (gameOver) return;
 
-        // Check time limit
+        // Time check
         long currentTime = System.currentTimeMillis();
-        if (currentTime - levelStartTime >= time_limit && beeCopter.getHp() > 0) {
+        if (currentTime - levelStartTime >= timeLimitMs && beeCopter.getHp() > 0) {
             gameStatus.loseLife();
-
             if (gameStatus.getPlayerLives() > 0) {
-                resetGame(); // Restart level
+                resetGame();
             } else {
                 gameOver = true;
                 playerWon = false;
+                repaint();
             }
             return;
         }
@@ -173,8 +181,9 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
                 isProjectileActive = false;
 
                 if (beeCopter.getHp() <= 0) {
-                    gameOver = true;
-                    playerWon = true;
+                    gameStatus.levelUp();
+                    resetGame(); // Move to next level
+                    return;
                 }
             }
 
@@ -183,7 +192,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
             }
         }
 
-        // Enemy projectile movement
+        // Enemy projectile
         if (!isEnemyProjectileActive && beeCopter.getHp() > 0) {
             isEnemyProjectileActive = true;
             enemyProjectileX = enemyX;
@@ -194,18 +203,16 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
             enemyProjectileX -= beeCopter.getAttackSpeed();
 
             // Collision with player
-            if (
-                    enemyProjectileX < playerX + playerSize &&
-                            enemyProjectileX + projectileSize > playerX &&
-                            enemyProjectileY + projectileSize > playerY &&
-                            enemyProjectileY < playerY + playerSize) {
+            if (enemyProjectileX < playerX + playerSize &&
+                    enemyProjectileX + projectileSize > playerX &&
+                    enemyProjectileY + projectileSize > playerY &&
+                    enemyProjectileY < playerY + playerSize) {
 
                 megaMan.setHealth(megaMan.getHealth() - 1);
                 isEnemyProjectileActive = false;
 
                 if (megaMan.getHealth() <= 0) {
                     gameStatus.loseLife();
-
                     if (gameStatus.getPlayerLives() > 0) {
                         resetGame();
                     } else {
@@ -224,8 +231,25 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     }
 
     private void resetGame() {
-        megaMan.setHealth(3); // Full player health
-        beeCopter.setHp(5);   // Full enemy health
+
+        if (gameStatus.getCurrentLevel() >= 4) {
+            // The game ends after level 3
+            playerWon = true;
+            gameOver = true;
+            repaint();
+            return;
+        }
+
+        megaMan.setHealth(3);
+
+        int enemyBaseHp = 5;
+        int scaledHp = enemyBaseHp + (gameStatus.getCurrentLevel() - 1) * 2;
+        beeCopter.setHp(scaledHp);
+
+        int baseSpeed = 10;
+        int scaledSpeed = baseSpeed + gameStatus.getCurrentLevel();
+        beeCopter.setAttackSpeed(scaledSpeed);
+
         playerY = floorY - playerSize;
         velocityY = 0;
         isJumping = false;
@@ -233,13 +257,25 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         isProjectileActive = false;
         isEnemyProjectileActive = false;
 
-        levelStartTime = System.currentTimeMillis(); // Restart timer
+        timeLimitMs = gameStatus.getTimerPerLevel() * 1000L;
+        levelStartTime = System.currentTimeMillis();
+
         repaint();
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (gameOver) return;
+        if (gameOver) {
+            if (e.getKeyCode() == KeyEvent.VK_R) {
+                gameOver = false;
+                playerWon = false;
+                gameStatus = new GameStatus(1, 3);
+                megaMan = new MegaMan();
+                beeCopter = new BeeCopter();
+                resetGame();
+            }
+            return;
+        }
 
         if (e.getKeyCode() == KeyEvent.VK_SPACE && !isJumping) {
             isJumping = true;

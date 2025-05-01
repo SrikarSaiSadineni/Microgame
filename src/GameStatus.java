@@ -10,7 +10,7 @@ public class GameStatus {
     }
 
     private void updateTimer() {
-        int baseTime = 10;
+        int baseTime = 12;
         int reductionPerLevel = 2;
         timerPerLevel = baseTime - ((currentLevel - 1) * reductionPerLevel);
     }
@@ -24,10 +24,6 @@ public class GameStatus {
         if (playerLives > 0) {
             playerLives--;
         }
-    }
-
-    public void gainLife() {
-        playerLives++;
     }
 
     public int getCurrentLevel() {
