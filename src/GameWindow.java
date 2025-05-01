@@ -14,15 +14,17 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     private Timer timer;
     private int delay = 20;
 
+    //Game Status (these are static due to only needing one instance of each)
+    private static GameStatus gameStatus;
+    private static MegaMan megaMan = new MegaMan();
+    private static BeeCopter beeCopter = new BeeCopter();
+
     private int playerX = 100;
     private int playerY;
     private final int playerSize = 40;
     private final int floorY = 430;
     private int velocityY = 0;
     private boolean isJumping = false;
-
-    private int playerHealth = 3;
-    private int score = 0;
 
     // Player projectile
     private boolean isProjectileActive = false;
@@ -35,7 +37,6 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     private final int enemyX = 500;
     private int enemyY = floorY - playerSize;
     private final int enemySize = 40;
-    private int enemyHealth = 5;
 
     // Enemy projectile
     private boolean isEnemyProjectileActive = false;
@@ -87,7 +88,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         }
 
         // Enemy
-        if (enemyHealth > 0) {
+        if (beeCopter.getHp() > 0) {
             g.setColor(Color.black);
             g.fillRect(enemyX, enemyY, enemySize, enemySize);
         }
@@ -101,8 +102,8 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         // UI
         g.setColor(Color.white);
         g.setFont(new Font("serif", Font.BOLD, 20));
-        g.drawString("Player Health: " + playerHealth, 20, 30);
-        g.drawString("Enemy Health: " + enemyHealth, 500, 30);
+        g.drawString("Player Health: " + megaMan.getHealth(), 20, 50);
+        g.drawString("Enemy Health: " + beeCopter.getHp(), 500, 50);
 
         if (gameOver) {
             g.setFont(new Font("serif", Font.BOLD, 40));
@@ -136,16 +137,16 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
             projectileX += projectileSpeed;
 
             // Collision with enemy
-            if (enemyHealth > 0 &&
+            if (beeCopter.getHp() > 0 &&
                     projectileX + projectileSize > enemyX &&
                     projectileX < enemyX + enemySize &&
                     projectileY + projectileSize > enemyY &&
                     projectileY < enemyY + enemySize) {
 
-                enemyHealth--;
+                beeCopter.setHp(beeCopter.getHp() - 1);
                 isProjectileActive = false;
 
-                if (enemyHealth <= 0) {
+                if (beeCopter.getHp() <= 0) {
                     gameOver = true;
                     playerWon = true;
                 }
@@ -157,7 +158,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         }
 
         // Enemy projectile movement
-        if (!isEnemyProjectileActive && enemyHealth > 0) {
+        if (!isEnemyProjectileActive && beeCopter.getHp() > 0) {
             isEnemyProjectileActive = true;
             enemyProjectileX = enemyX;
             enemyProjectileY = enemyY + enemySize / 2 - projectileSize / 2;
@@ -173,10 +174,10 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
                             enemyProjectileY + projectileSize > playerY &&
                             enemyProjectileY < playerY + playerSize) {
 
-                playerHealth--;
+                megaMan.setHealth(megaMan.getHealth() - 1);
                 isEnemyProjectileActive = false;
 
-                if (playerHealth <= 0) {
+                if (megaMan.getHealth() <= 0) {
                     gameOver = true;
                     playerWon = false;
                 }
@@ -208,8 +209,4 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
 
     @Override public void keyReleased(KeyEvent e) {}
     @Override public void keyTyped(KeyEvent e) {}
-
-    public static void main(String[] args) {
-        new GameWindow();
-    }
 }

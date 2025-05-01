@@ -13,12 +13,10 @@ public abstract class Player {
 
     public void startCharging() {
         isCharging = true;
-        System.out.println("Charging started.");
     }
 
     public void stopCharging() {
         isCharging = false;
-        System.out.println("Charging stopped.");
     }
 
     public boolean isCharging() {
@@ -37,7 +35,9 @@ public abstract class Player {
         return invincibilityFrames;
     }
 
-    public abstract void attack();
+    public void setHealth(int health) {
+        this.health = health;
+    }
 
-    public abstract void takeDamage(int amount);
+    public abstract void takeDamage();
 }
