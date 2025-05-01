@@ -1,10 +1,12 @@
 public abstract class Enemy {
     int hp;
     int invincibilityTimer;
+    int attackSpeed;
 
-    public Enemy(int hp, int invincibilityTimer) {
+    public Enemy(int hp, int invincibilityTimer, int attackSpeed) {
         this.hp = hp;
         this.invincibilityTimer = invincibilityTimer;
+        this.attackSpeed = attackSpeed;
     }
 
     public int getHp() {
@@ -23,6 +25,14 @@ public abstract class Enemy {
         this.invincibilityTimer = timer;
     }
 
+    public int getAttackSpeed() {
+        return attackSpeed;
+    }
+
+    public void setAttackSpeed(int attackSpeed) {
+        this.attackSpeed = attackSpeed;
+    }
+
     public boolean isInvincible() {
         return invincibilityTimer > 0;
     }
@@ -35,5 +45,5 @@ public abstract class Enemy {
 
     public abstract void attack();
 
-    public abstract void takeDamage(int amount);
+    public abstract void takeDamage();
 }

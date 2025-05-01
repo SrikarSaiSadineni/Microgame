@@ -31,25 +31,23 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     private int projectileX;
     private int projectileY;
     private final int projectileSize = 20;
-    private final int projectileSpeed = 10;
 
     // Enemy
     private final int enemyX = 500;
-    private int enemyY = floorY - playerSize;
+    private int enemyY = floorY - (playerSize+70);
     private final int enemySize = 40;
 
     // Enemy projectile
     private boolean isEnemyProjectileActive = false;
     private int enemyProjectileX;
     private int enemyProjectileY;
-    private final int enemyProjectileSpeed = 7;
 
     private boolean gameOver = false;
     private boolean playerWon = false;
 
     // Time tracking
     private long levelStartTime;
-    private final long TIME_LIMIT_MS = 10000; // 10 seconds
+    private long time_limit = 10000; // 10 seconds
 
     public GameWindow() {
         setTitle("Mega Man X");
@@ -114,7 +112,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         // Timer countdown
         long currentTime = System.currentTimeMillis();
         long elapsed = currentTime - levelStartTime;
-        long remaining = Math.max(0, (TIME_LIMIT_MS - elapsed) / 1000); // in seconds
+        long remaining = Math.max(0, (time_limit - elapsed) / 1000); // in seconds
 
         g.drawString("Time Left: " + remaining + "s", 500, 80);
 
@@ -136,7 +134,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
 
         // Check time limit
         long currentTime = System.currentTimeMillis();
-        if (currentTime - levelStartTime >= TIME_LIMIT_MS && beeCopter.getHp() > 0) {
+        if (currentTime - levelStartTime >= time_limit && beeCopter.getHp() > 0) {
             gameStatus.loseLife();
 
             if (gameStatus.getPlayerLives() > 0) {
@@ -162,7 +160,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
 
         // Player projectile movement
         if (isProjectileActive) {
-            projectileX += projectileSpeed;
+            projectileX += megaMan.getAttackSpeed();
 
             // Collision with enemy
             if (beeCopter.getHp() > 0 &&
@@ -193,7 +191,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         }
 
         if (isEnemyProjectileActive) {
-            enemyProjectileX -= enemyProjectileSpeed;
+            enemyProjectileX -= beeCopter.getAttackSpeed();
 
             // Collision with player
             if (

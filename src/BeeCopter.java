@@ -1,7 +1,7 @@
 public class BeeCopter extends Enemy {
 
     public BeeCopter() {
-        super(5, 10);
+        super(4, 10, 10);
     }
 
     @Override
@@ -10,7 +10,7 @@ public class BeeCopter extends Enemy {
     }
 
     @Override
-    public void takeDamage(int amount) {
-
+    public void takeDamage() {
+        hp--;
     }
 }
