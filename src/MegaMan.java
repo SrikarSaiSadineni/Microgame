@@ -1,7 +1,7 @@
 public class MegaMan extends Player {
 
     public MegaMan() {
-        super(3, 60, 10, 15);
+        super(3, 1, 10, 15);
     }
 
     @Override

@@ -11,7 +11,7 @@ public class GameStatus {
 
     private void updateTimer() {
         int baseTime = 12;
-        int reductionPerLevel = 2;
+        int reductionPerLevel = 1;
         timerPerLevel = baseTime - ((currentLevel - 1) * reductionPerLevel);
     }
 

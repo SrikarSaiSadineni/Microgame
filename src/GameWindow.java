@@ -30,6 +30,12 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     // Player projectiles
     private ArrayList<Projectile> projectiles = new ArrayList<>();
     private final int projectileSize = 20;
+    private final int chargeShotSize = 40; // Larger projectile size for charge shot
+
+    // Charge shot variables
+    private long chargeStartTime = -1; // When the player starts charging
+    private final long chargeTimeLimit = 1000; // Time limit for full charge in milliseconds
+    private boolean isCharging = false;
 
     // Enemy
     private final int enemyX = 500;
@@ -87,7 +93,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         g.setColor(Color.red);
         for (Projectile p : projectiles) {
             if (p.isActive()) {
-                g.fillOval(p.getX(), p.getY(), projectileSize, projectileSize);
+                g.fillOval(p.getX(), p.getY(), p.getSize(), p.getSize());
             }
         }
 
@@ -175,11 +181,11 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
 
                 // Collision with enemy
                 if (beeCopter.getHp() > 0 &&
-                        p.getX() + projectileSize > enemyX &&
+                        p.getX() + p.getSize() > enemyX &&
                         p.getX() < enemyX + enemySize &&
-                        p.getY() + projectileSize > enemyY &&
+                        p.getY() + p.getSize() > enemyY &&
                         p.getY() < enemyY + enemySize) {
-                    beeCopter.setHp(beeCopter.getHp() - 1);
+                    beeCopter.setHp(beeCopter.getHp() - p.getDamage());
                     p.setActive(false); // Deactivate the projectile
                     projectilesToRemove.add(p); // Add to list to remove
 
@@ -239,8 +245,8 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     }
 
     private void resetGame() {
-        if (gameStatus.getCurrentLevel() >= 4) {
-            // The game ends after level 3
+        if (gameStatus.getCurrentLevel() >= 6) {
+            // The game ends after level 5
             playerWon = true;
             gameOver = true;
             repaint();
@@ -249,7 +255,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
 
         megaMan.setHealth(3);
 
-        int enemyBaseHp = 5;
+        int enemyBaseHp = 4;
         int scaledHp = enemyBaseHp + (gameStatus.getCurrentLevel() - 1) * 2;
         beeCopter.setHp(scaledHp);
 
@@ -291,25 +297,32 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         }
 
         if (e.getKeyCode() == KeyEvent.VK_M) {
-            // Check for an inactive projectile to reuse
-            boolean fired = false;
-            for (Projectile p : projectiles) {
-                if (!p.isActive()) {
-                    p.setActive(true); // Reactivate the projectile
-                    p.move(); // Move to starting position
-                    fired = true;
-                    break;
-                }
-            }
-
-            if (!fired && projectiles.size() < 3) {
-                // Fire a new projectile if there are fewer than 3 active
-                projectiles.add(new Projectile(playerX + playerSize, playerY + playerSize / 2 - projectileSize / 2));
+            // Start charging the shot
+            if (!isCharging) {
+                isCharging = true;
+                chargeStartTime = System.currentTimeMillis();
             }
         }
     }
 
-    @Override public void keyReleased(KeyEvent e) {}
+    @Override public void keyReleased(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_M) {
+            // Release the shot when the player releases the button
+            if (isCharging) {
+                long chargeDuration = System.currentTimeMillis() - chargeStartTime;
+                boolean isChargeComplete = chargeDuration >= megaMan.getChargeTime() * 1000L;
+
+                int damage = isChargeComplete ? 4 : 1;
+                int size = isChargeComplete ? chargeShotSize : projectileSize;
+
+                // Fire a charge shot
+                projectiles.add(new Projectile(playerX + playerSize, playerY + playerSize / 2 - size / 2, damage, size));
+                isCharging = false;
+                chargeStartTime = -1;
+            }
+        }
+    }
+
     @Override public void keyTyped(KeyEvent e) {}
 }
 
@@ -317,10 +330,14 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
 class Projectile {
     private int x, y;
     private boolean active;
+    private int damage;
+    private int size;
 
-    public Projectile(int startX, int startY) {
+    public Projectile(int startX, int startY, int damage, int size) {
         this.x = startX;
         this.y = startY;
+        this.damage = damage;
+        this.size = size;
         this.active = true;
     }
 
@@ -342,5 +359,13 @@ class Projectile {
 
     public int getY() {
         return y;
+    }
+
+    public int getDamage() {
+        return damage;
+    }
+
+    public int getSize() {
+        return size;
     }
 }
