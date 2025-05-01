@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.ArrayList;
 
 import javax.swing.JFrame;
 import javax.swing.Timer;
@@ -26,10 +27,8 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     private int velocityY = 0;
     private boolean isJumping = false;
 
-    // Player projectile
-    private boolean isProjectileActive = false;
-    private int projectileX;
-    private int projectileY;
+    // Player projectiles
+    private ArrayList<Projectile> projectiles = new ArrayList<>();
     private final int projectileSize = 20;
 
     // Enemy
@@ -84,10 +83,12 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         g.setColor(Color.blue);
         g.fillRect(playerX, playerY, playerSize, playerSize);
 
-        // Player projectile
-        if (isProjectileActive) {
-            g.setColor(Color.red);
-            g.fillOval(projectileX, projectileY, projectileSize, projectileSize);
+        // Player projectiles
+        g.setColor(Color.red);
+        for (Projectile p : projectiles) {
+            if (p.isActive()) {
+                g.fillOval(p.getX(), p.getY(), projectileSize, projectileSize);
+            }
         }
 
         // Enemy
@@ -167,30 +168,37 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         }
 
         // Player projectile movement
-        if (isProjectileActive) {
-            projectileX += megaMan.getAttackSpeed();
+        ArrayList<Projectile> projectilesToRemove = new ArrayList<>();
+        for (Projectile p : projectiles) {
+            if (p.isActive()) {
+                p.move();
 
-            // Collision with enemy
-            if (beeCopter.getHp() > 0 &&
-                    projectileX + projectileSize > enemyX &&
-                    projectileX < enemyX + enemySize &&
-                    projectileY + projectileSize > enemyY &&
-                    projectileY < enemyY + enemySize) {
+                // Collision with enemy
+                if (beeCopter.getHp() > 0 &&
+                        p.getX() + projectileSize > enemyX &&
+                        p.getX() < enemyX + enemySize &&
+                        p.getY() + projectileSize > enemyY &&
+                        p.getY() < enemyY + enemySize) {
+                    beeCopter.setHp(beeCopter.getHp() - 1);
+                    p.setActive(false); // Deactivate the projectile
+                    projectilesToRemove.add(p); // Add to list to remove
 
-                beeCopter.setHp(beeCopter.getHp() - 1);
-                isProjectileActive = false;
+                    if (beeCopter.getHp() <= 0) {
+                        gameStatus.levelUp();
+                        resetGame(); // Move to next level
+                        return;
+                    }
+                }
 
-                if (beeCopter.getHp() <= 0) {
-                    gameStatus.levelUp();
-                    resetGame(); // Move to next level
-                    return;
+                if (p.getX() > getWidth()) {
+                    projectilesToRemove.add(p);
+                    p.setActive(false); // Deactivate the projectile when it goes off screen
                 }
             }
-
-            if (projectileX > getWidth()) {
-                isProjectileActive = false;
-            }
         }
+
+        // Remove inactive projectiles from the list
+        projectiles.removeAll(projectilesToRemove);
 
         // Enemy projectile
         if (!isEnemyProjectileActive && beeCopter.getHp() > 0) {
@@ -231,7 +239,6 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     }
 
     private void resetGame() {
-
         if (gameStatus.getCurrentLevel() >= 4) {
             // The game ends after level 3
             playerWon = true;
@@ -254,7 +261,8 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         velocityY = 0;
         isJumping = false;
 
-        isProjectileActive = false;
+        projectiles.clear(); // Clear projectiles at the start of each level
+
         isEnemyProjectileActive = false;
 
         timeLimitMs = gameStatus.getTimerPerLevel() * 1000L;
@@ -282,13 +290,57 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
             velocityY = -15;
         }
 
-        if (e.getKeyCode() == KeyEvent.VK_M && !isProjectileActive) {
-            isProjectileActive = true;
-            projectileX = playerX + playerSize;
-            projectileY = playerY + playerSize / 2 - projectileSize / 2;
+        if (e.getKeyCode() == KeyEvent.VK_M) {
+            // Check for an inactive projectile to reuse
+            boolean fired = false;
+            for (Projectile p : projectiles) {
+                if (!p.isActive()) {
+                    p.setActive(true); // Reactivate the projectile
+                    p.move(); // Move to starting position
+                    fired = true;
+                    break;
+                }
+            }
+
+            if (!fired && projectiles.size() < 3) {
+                // Fire a new projectile if there are fewer than 3 active
+                projectiles.add(new Projectile(playerX + playerSize, playerY + playerSize / 2 - projectileSize / 2));
+            }
         }
     }
 
     @Override public void keyReleased(KeyEvent e) {}
     @Override public void keyTyped(KeyEvent e) {}
+}
+
+// Projectile class
+class Projectile {
+    private int x, y;
+    private boolean active;
+
+    public Projectile(int startX, int startY) {
+        this.x = startX;
+        this.y = startY;
+        this.active = true;
+    }
+
+    public void move() {
+        x += 10; // Speed of projectile
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
 }
