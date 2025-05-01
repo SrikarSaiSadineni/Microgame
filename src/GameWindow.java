@@ -113,9 +113,11 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         } else if (isCharging) {
             currentPlayerSprite = playerShootingSprite;
         }
+        int sprite_width = currentPlayerSprite.getWidth(null);
+        int sprite_height = currentPlayerSprite.getHeight(null);
 
 // Draw the player
-        g.drawImage(currentPlayerSprite, playerX, playerY, playerSize, playerSize, this);
+        g.drawImage(currentPlayerSprite, playerX, playerY, sprite_width * 2, sprite_height * 2, this);
 
 
         for (Projectile p : projectiles) {
@@ -127,7 +129,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
 
 
         if (beeCopter.getHp() > 0) {
-            g.drawImage(enemySprite, enemyX, enemyY, enemySize, enemySize, this);
+            g.drawImage(enemySprite, enemyX, enemyY, enemySprite.getWidth(null), enemySprite.getHeight(null), this);
         }
 
 
