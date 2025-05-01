@@ -14,8 +14,8 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     private Timer timer;
     private int delay = 20;
 
-    //Game Status (these are static due to only needing one instance of each)
-    private static GameStatus gameStatus;
+    // Game Status
+    private static GameStatus gameStatus = new GameStatus(1, 3);
     private static MegaMan megaMan = new MegaMan();
     private static BeeCopter beeCopter = new BeeCopter();
 
@@ -47,6 +47,10 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     private boolean gameOver = false;
     private boolean playerWon = false;
 
+    // Time tracking
+    private long levelStartTime;
+    private final long TIME_LIMIT_MS = 10000; // 10 seconds
+
     public GameWindow() {
         setTitle("Mega Man X");
         setSize(700, 600);
@@ -63,6 +67,7 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         timer = new Timer(delay, this);
         timer.start();
 
+        levelStartTime = System.currentTimeMillis(); // Start timer
         setVisible(true);
     }
 
@@ -104,6 +109,15 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         g.setFont(new Font("serif", Font.BOLD, 20));
         g.drawString("Player Health: " + megaMan.getHealth(), 20, 50);
         g.drawString("Enemy Health: " + beeCopter.getHp(), 500, 50);
+        g.drawString("Lives: " + gameStatus.getPlayerLives(), 20, 80);
+
+        // Timer countdown
+        long currentTime = System.currentTimeMillis();
+        long elapsed = currentTime - levelStartTime;
+        long remaining = Math.max(0, (TIME_LIMIT_MS - elapsed) / 1000); // in seconds
+
+        g.drawString("Time Left: " + remaining + "s", 500, 80);
+
 
         if (gameOver) {
             g.setFont(new Font("serif", Font.BOLD, 40));
@@ -119,6 +133,20 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (gameOver) return;
+
+        // Check time limit
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - levelStartTime >= TIME_LIMIT_MS && beeCopter.getHp() > 0) {
+            gameStatus.loseLife();
+
+            if (gameStatus.getPlayerLives() > 0) {
+                resetGame(); // Restart level
+            } else {
+                gameOver = true;
+                playerWon = false;
+            }
+            return;
+        }
 
         // Gravity / jump
         if (isJumping) {
@@ -178,8 +206,14 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
                 isEnemyProjectileActive = false;
 
                 if (megaMan.getHealth() <= 0) {
-                    gameOver = true;
-                    playerWon = false;
+                    gameStatus.loseLife();
+
+                    if (gameStatus.getPlayerLives() > 0) {
+                        resetGame();
+                    } else {
+                        gameOver = true;
+                        playerWon = false;
+                    }
                 }
             }
 
@@ -188,6 +222,20 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
             }
         }
 
+        repaint();
+    }
+
+    private void resetGame() {
+        megaMan.setHealth(3); // Full player health
+        beeCopter.setHp(5);   // Full enemy health
+        playerY = floorY - playerSize;
+        velocityY = 0;
+        isJumping = false;
+
+        isProjectileActive = false;
+        isEnemyProjectileActive = false;
+
+        levelStartTime = System.currentTimeMillis(); // Restart timer
         repaint();
     }
 
