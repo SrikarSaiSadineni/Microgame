@@ -3,54 +3,193 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
+/**
+ * The {@code GameWindow} class represents the main game window of the Mega Man X minigame.
+ * It extends {@link JFrame} and implements {@link KeyListener} and {@link ActionListener}.
+ * This class manages the game state, updates the game logic, responds for user input,
+ * and renders the game on the screen.
+ */
 public class GameWindow extends JFrame implements KeyListener, ActionListener {
 
+    /**
+     * Timer to control the game time.
+     */
     private Timer timer;
+
+    /**
+     * Delay between game updates in milliseconds.
+     */
     private int delay = 20;
 
+    /**
+     * The panel that contains the game rendering and handles painting.
+     */
     private GamePanel panel;
 
+    /**
+     * The game status containing information about the current level and player's lives.
+     */
     private static GameStatus gameStatus = new GameStatus(1, 3);
+
+    /**
+     * The player character, Mega Man X.
+     */
     private static MegaMan megaMan = new MegaMan();
+
+    /**
+     * The enemy, BeeCopter.
+     */
     private static BeeCopter beeCopter = new BeeCopter();
 
+    /**
+     * Player's X-coordinate position on the screen.
+     */
     private int playerX = 100;
+
+    /**
+     * Player's Y-coordinate position on the screen.
+     */
     private int playerY;
+
+    /**
+     * The size of the player character.
+     */
     private final int playerSize = 40;
+
+    /**
+     * The Y-coordinate of the floor where the player stands.
+     */
     private final int floorY = 430;
+
+    /**
+     * The player's vertical velocity.
+     */
     private int velocityY = 0;
+
+    /**
+     * Flag indicating whether the player is currently jumping.
+     */
     private boolean isJumping = false;
 
+    /**
+     * A list of projectiles fired by the player.
+     */
     private ArrayList<Projectile> projectiles = new ArrayList<>();
+
+    /**
+     * The size of a regular projectile.
+     */
     private final int projectileSize = 20;
+
+    /**
+     * The size of a charged projectile.
+     */
     private final int chargeShotSize = 40;
 
+    /**
+     * The time when charging started, used to determine the charge duration.
+     */
     private long chargeStartTime = -1;
+
+    /**
+     * Flag indicating whether the player is charging a shot.
+     */
     private boolean isCharging = false;
 
+    /**
+     * The X-coordinate of the enemy's starting position.
+     */
     private final int enemyX = 500;
+
+    /**
+     * The Y-coordinate of the enemy's starting position.
+     */
     private int enemyY = floorY - (playerSize + 100);
+
+    /**
+     * The size of the enemy character.
+     */
     private final int enemySize = 40;
 
+    /**
+     * Flag indicating whether the enemy's projectile is active.
+     */
     private boolean isEnemyProjectileActive = false;
+
+    /**
+     * The X-coordinate of the enemy's projectile.
+     */
     private int enemyProjectileX;
+
+    /**
+     * The Y-coordinate of the enemy's projectile.
+     */
     private int enemyProjectileY;
 
+    /**
+     * Flag indicating whether the game is over.
+     */
     private boolean gameOver = false;
+
+    /**
+     * Flag indicating whether the player has won.
+     */
     private boolean playerWon = false;
 
+    /**
+     * The start time of the current level.
+     */
     private long levelStartTime;
+
+    /**
+     * The time limit for the current level in milliseconds.
+     */
     private long timeLimitMs;
 
+    /**
+     * The background image used in the game.
+     */
     private Image backgroundImage;
+
+    /**
+     * The sprite for the player character in the idle state.
+     */
     private Image playerIdleSprite;
+
+    /**
+     * The sprite for the player character in the jump state.
+     */
     private Image playerJumpSprite;
+
+    /**
+     * The sprite for the player character while shooting on the ground.
+     */
     private Image playerShootingSprite;
+
+    /**
+     * The sprite for the player character while shooting in the air.
+     */
     private Image playerShootingAirSprite;
+
+    /**
+     * The sprite for the enemy character.
+     */
     private Image enemySprite;
+
+    /**
+     * The sprite for regular projectiles.
+     */
     private Image bulletSprite;
+
+    /**
+     * The sprite for charged projectiles.
+     */
     private Image chargeBulletSprite;
 
+    /**
+     * Constructs a new {@code GameWindow}.
+     * Initializes the window properties, loads game assets, and starts the game.
+     */
     public GameWindow() {
         setTitle("Mega Man X");
         setSize(700, 600);
@@ -84,6 +223,11 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         setVisible(true);
     }
 
+    /**
+     * Draws the game graphics including the player, projectiles, enemies, and HUD elements.
+     *
+     * @param g The {@code Graphics} object used for drawing.
+     */
     public void drawGame(Graphics g) {
         g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
 
@@ -138,6 +282,11 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         }
     }
 
+    /**
+     * Called whenever the timer fires an action event. It updates the game state.
+     *
+     * @param e The {@code ActionEvent} triggered by the timer.
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
         if (gameOver) return;
@@ -226,6 +375,9 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         panel.repaint();
     }
 
+    /**
+     * Resets the game to its initial state for the next level or when the game is restarted.
+     */
     private void resetGame() {
         if (gameStatus.getCurrentLevel() >= 6) {
             gameOver = true;
@@ -251,6 +403,11 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         panel.repaint();
     }
 
+    /**
+     * Handles key press events. Used to control the player's actions (e.g., jumping, shooting).
+     *
+     * @param e The {@code KeyEvent} that occurred.
+     */
     @Override
     public void keyPressed(KeyEvent e) {
         if (gameOver && e.getKeyCode() == KeyEvent.VK_R) {
@@ -276,6 +433,11 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         }
     }
 
+    /**
+     * Handles key release events. Used to fire projectiles when the shooting button is released.
+     *
+     * @param e The {@code KeyEvent} that occurred.
+     */
     @Override
     public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_M && isCharging) {
@@ -292,5 +454,6 @@ public class GameWindow extends JFrame implements KeyListener, ActionListener {
         }
     }
 
-    @Override public void keyTyped(KeyEvent e) {}
+    @Override
+    public void keyTyped(KeyEvent e) {}
 }
